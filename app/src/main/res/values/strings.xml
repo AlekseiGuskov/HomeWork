@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">SimbirSoft</string>
+    <string name="not_all_fields_are_filled">Не все поля заполнены</string>
+    <string name="registration">Регистрация</string>
+    <string name="forgot_password">Забыли пароль?</string>
+    <string name="use_sotial_network">Использовать соцсети</string>
+    <string name="email">Email</string>
+    <string name="password">Пароль</string>
 </resources>
