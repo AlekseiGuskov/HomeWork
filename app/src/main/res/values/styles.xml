@@ -13,16 +13,10 @@
 
     <style name="ClickableTextViewBlack">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">#4c4c4c</item>
+        <item name="android:textColor">@color/colorAccent</item>
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:lineSpacingExtra">12sp</item>
         <item name="android:textStyle">normal</item>
-    </style>
-
-    <style name="ColoredButton" parent="Widget.AppCompat.Button.Colored">
-        <item name="colorControlHighlight">#4c4c4c</item>
-        <item name="colorButtonNormal">#4c4c4c</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
 </resources>

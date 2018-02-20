@@ -6,4 +6,7 @@
     <string name="use_sotial_network">Использовать соцсети</string>
     <string name="email">Email</string>
     <string name="password">Пароль</string>
+    <string name="authorisation">Авторизация</string>
+    <string name="enter">Вход</string>
+    <string name="not_connected">Is not connected!</string>
 </resources>
