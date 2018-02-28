@@ -2,10 +2,8 @@ package ru.example.simbirsoft.activitys
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
 import ru.example.simbirsoft.R
 import ru.example.simbirsoft.fragments.LoginFragment
-import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : AppCompatActivity() {

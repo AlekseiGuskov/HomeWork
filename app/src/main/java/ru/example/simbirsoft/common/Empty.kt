@@ -1,4 +1,4 @@
-package ru.example.simbirsoft
+package ru.example.simbirsoft.common
 
 /**
 * Created by ag on 16.02.18.

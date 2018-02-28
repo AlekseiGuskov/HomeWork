@@ -42,9 +42,17 @@ dependencies {
     implementation "com.jakewharton:butterknife:8.8.1"
     kapt "com.jakewharton:butterknife-compiler:8.8.1"
 
+    //moxy
+    implementation 'com.arello-mobile:moxy:1.5.3'
+    implementation 'com.arello-mobile:moxy-app-compat:1.5.3'
+    kapt 'com.arello-mobile:moxy-compiler:1.5.3'
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+}
+kapt {
+    generateStubs = true
 }
 
 apply plugin: 'com.google.gms.google-services'

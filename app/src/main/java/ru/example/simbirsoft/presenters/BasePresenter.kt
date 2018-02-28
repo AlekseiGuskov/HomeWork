@@ -1,17 +1,14 @@
 package ru.example.simbirsoft.presenters
 
-import com.trello.rxlifecycle2.LifecycleTransformer
-import com.trello.rxlifecycle2.RxLifecycle
-import io.reactivex.subjects.BehaviorSubject
+import com.arellomobile.mvp.MvpPresenter
+import com.arellomobile.mvp.MvpView
 import ru.example.simbirsoft.Application
-import ru.example.simbirsoft.Empty
-import ru.example.simbirsoft.Util
 
 /**
  * Created by ag
  * on 16.02.18.
  */
-abstract class BasePresenter {
+abstract class BasePresenter<V : MvpView> : MvpPresenter<V>() {
 
     open fun init() {}
 

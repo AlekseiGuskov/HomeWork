@@ -1,7 +1,8 @@
-package ru.example.simbirsoft
+package ru.example.simbirsoft.common
 
 import android.content.Context
 import android.net.ConnectivityManager
+import ru.example.simbirsoft.Application
 
 /**
  * Created by harri
