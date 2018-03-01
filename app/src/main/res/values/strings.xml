@@ -11,4 +11,11 @@
     <string name="not_connected">Is not connected!</string>
     <string name="invalid_email">Invalid email</string>
     <string name="invalid_password">Invalid password</string>
+    <string name="name">Имя</string>
+    <string name="phone">Телефон</string>
+    <string name="old_password">Старый пароль</string>
+    <string name="new_password">Новый пароль</string>
+    <string name="repeat">Повторить</string>
+    <string name="save">Сохранить</string>
+    <string name="private_data">Личные данные</string>
 </resources>
