@@ -54,6 +54,7 @@
         </android.support.design.widget.AppBarLayout>
 
         <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/avatar"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:src="@mipmap/ic_launcher"

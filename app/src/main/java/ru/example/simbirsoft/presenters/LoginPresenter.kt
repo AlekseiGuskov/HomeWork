@@ -88,18 +88,4 @@ class LoginPresenter : BasePresenter<LoginView>() {
 
     private fun isValidEmail(email: String?): Boolean =
             !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
-
-    //Callback methods
-
-    /*override fun returnToPreviousFragment(): Observable<Empty> = mReturnToPreviousFragmentObservable
-
-    override fun emailValue(): Observable<String> = mEmailValueObservable
-
-    override fun passwordValue(): Observable<String> = mPasswordValueObservable
-
-    override fun sendButtonState(): Observable<Boolean> = mSendButtonStateObservable
-
-    override fun showMessage(): Observable<String> = mShowMessageObservable
-
-    override fun clearFields(): Observable<Empty> = mClearAllFieldsObservable*/
 }
