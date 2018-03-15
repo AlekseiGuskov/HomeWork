@@ -26,5 +26,11 @@ interface EditProfileView : MvpView {
     fun sendButtonState(state: Boolean)
     @StateStrategyType(SkipStrategy::class)
     fun showMessage(text: String)
+    @StateStrategyType(SkipStrategy::class)
+    fun progressBarVisibility(isVisible: Boolean)
+    @StateStrategyType(SkipStrategy::class)
+    fun chooseImage()
+    @StateStrategyType(SkipStrategy::class)
+    fun makePhoto()
     fun clearFields()
 }

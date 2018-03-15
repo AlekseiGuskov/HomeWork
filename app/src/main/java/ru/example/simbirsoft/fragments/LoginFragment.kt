@@ -25,7 +25,7 @@ class LoginFragment : MvpBaseFragment(), LoginView {
         }
     }
 
-    @InjectPresenter(type = PresenterType.WEAK)
+    @InjectPresenter(type = PresenterType.LOCAL)
     lateinit var presenter: LoginPresenter
 
     @BindView(R.id.toolbar) lateinit var mToolbar: Toolbar

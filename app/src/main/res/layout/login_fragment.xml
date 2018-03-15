@@ -48,7 +48,7 @@
                 android:paddingRight="16dp"
                 android:paddingTop="24dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/img" />
+                android:src="@drawable/owl" />
 
             <LinearLayout
                 android:id="@+id/inputPanel"

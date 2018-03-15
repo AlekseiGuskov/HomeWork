@@ -18,4 +18,11 @@
     <string name="repeat">Повторить</string>
     <string name="save">Сохранить</string>
     <string name="private_data">Личные данные</string>
+    <string name="edit">Редактировать</string>
+    <string name="invalid_new_password">Invalid new password</string>
+    <string name="invalid_old_password">Invalid old password</string>
+    <string name="invalid_phone">Invalid phone</string>
+    <string name="invalid_name">Invalid name</string>
+    <string name="change_photo">Сменить фотографию</string>
+    <string name="change_password">Сменить пароль</string>
 </resources>

@@ -1,19 +1,33 @@
 package ru.example.simbirsoft.fragments
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.support.design.widget.TextInputLayout
 import android.support.v7.widget.Toolbar
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.TextView
 import butterknife.BindView
+import butterknife.OnClick
 import com.arellomobile.mvp.presenter.InjectPresenter
 import com.arellomobile.mvp.presenter.PresenterType
+import com.jakewharton.rxbinding2.widget.RxTextView
 import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.android.synthetic.main.login_fragment.view.*
 import ru.example.simbirsoft.R
 import ru.example.simbirsoft.presenters.EditProfilePresenter
 import ru.example.simbirsoft.views.EditProfileView
+import android.provider.MediaStore
+import android.support.v4.content.FileProvider
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 /**
 * Created by ag on 02.03.18.
@@ -21,10 +35,16 @@ import ru.example.simbirsoft.views.EditProfileView
 class EditProfileFragment : MvpBaseFragment(), EditProfileView {
 
     companion object {
+        private const val LOAD_IMAGE = 1
+        private const val LOAD_PHOTO = 2
+
         fun getInstance(): EditProfileFragment = EditProfileFragment()
     }
 
     @BindView(R.id.toolbar) lateinit var mToolbar: Toolbar
+    @BindView(R.id.progress_bar_container) lateinit var mProgressBarContainer: FrameLayout
+    @BindView(R.id.title_name) lateinit var mTitleNameTextView: TextView
+    @BindView(R.id.change_photo_text_view) lateinit var mChangePhotoTextView: TextView
     @BindView(R.id.name_text_input_layout) lateinit var mNameTextInputLayout: TextInputLayout
     @BindView(R.id.phone_text_input_layout) lateinit var mPhoneTextInputLayout: TextInputLayout
     @BindView(R.id.email_text_input_layout) lateinit var mEmailTextInputLayout: TextInputLayout
@@ -35,7 +55,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
     @BindView(R.id.send_button) lateinit var mSendButton: Button
 
 
-    @InjectPresenter(type = PresenterType.WEAK)
+    @InjectPresenter(type = PresenterType.LOCAL)
     lateinit var presenter: EditProfilePresenter
 
     override fun layoutResourceId(): Int = R.layout.edit_profile_fragment
@@ -43,8 +63,37 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         presenter.init()
+        initToolbar()
 
+        RxTextView.textChanges(mNameTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.nameWasChanged(it.toString())
+                }
 
+        RxTextView.textChanges(mEmailTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.emailWasChanged(it.toString())
+                }
+
+        RxTextView.textChanges(mPhoneTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.phoneWasChanged(it.toString())
+                }
+
+        RxTextView.textChanges(mOldPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.oldPasswordWasChanged(it.toString())
+                }
+
+        RxTextView.textChanges(mNewPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.newPasswordWasChanged(it.toString())
+                }
+
+        RxTextView.textChanges(mRepeatPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
+                .skip(1).subscribe {
+                    presenter.repeatPasswordWasChanged(it.toString())
+                }
     }
 
     override fun onDestroyView() {
@@ -64,7 +113,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         if (isValid) {
             mNameTextInputLayout.isErrorEnabled = false
         } else {
-            mNameTextInputLayout.error = "Invalid name"
+            mNameTextInputLayout.error = getString(R.string.invalid_name)
         }
     }
 
@@ -76,7 +125,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         if (isValid) {
             mPhoneTextInputLayout.isErrorEnabled = false
         } else {
-            mPhoneTextInputLayout.error = "Invalid phone"
+            mPhoneTextInputLayout.error = getString(R.string.invalid_phone)
         }
     }
 
@@ -100,7 +149,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         if (isValid) {
             mOldPasswordTextInputLayout.isErrorEnabled = false
         } else {
-            mOldPasswordTextInputLayout.error = "Invalid old password"
+            mOldPasswordTextInputLayout.error = getString(R.string.invalid_old_password)
         }
     }
 
@@ -112,7 +161,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         if (isValid) {
             mNameTextInputLayout.isErrorEnabled = false
         } else {
-            mNewPasswordTextInputLayout.error = "Invalid new password"
+            mNewPasswordTextInputLayout.error = getString(R.string.invalid_new_password)
         }
     }
 
@@ -124,7 +173,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         if (isValid) {
             mRepeatPasswordTextInputLayout.isErrorEnabled = false
         } else {
-            mRepeatPasswordTextInputLayout.error = "Invalid new password"
+            mRepeatPasswordTextInputLayout.error = getString(R.string.invalid_new_password)
         }
     }
 
@@ -160,8 +209,90 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         mSendButton.setBackgroundColor(getColor(R.color.colorAccent))
     }
 
+    override fun progressBarVisibility(isVisible: Boolean) {
+        if (isVisible) {
+            mProgressBarContainer.visibility = View.VISIBLE
+        } else {
+            mProgressBarContainer.visibility = View.GONE
+        }
+    }
+
+    override fun chooseImage() {
+        val intent = Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        startActivityForResult(intent, LOAD_IMAGE)
+    }
+
+    override fun makePhoto() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(context.packageManager) != null) {
+            var photo: File? = null
+            try {
+                photo = createImageFile()
+            } catch (e: IOException) {
+
+            }
+            photo?.let {
+                val uri = FileProvider.getUriForFile(context, "ru.example.simbirsoft.fileprovider", it)
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                startActivityForResult(takePictureIntent, LOAD_PHOTO)
+            }
+        }
+    }
+
+    var mCurrentPhotoPath = ""
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val imageFileName = "JPEG_" + timeStamp + "_"
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+
+        val image = File.createTempFile(
+                imageFileName, /* prefix */
+                ".jpg", /* suffix */
+                storageDir      /* directory */
+        )
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = "file:" + image.absolutePath
+        return image
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK ) {
+            when (requestCode) {
+                LOAD_IMAGE -> {
+                    if (data?.data != null) {
+                        showMessage("Image")
+                    }
+                }
+                LOAD_PHOTO -> {
+                    showMessage("Photo")
+                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver,
+                            Uri.parse(mCurrentPhotoPath))
+                    bitmap?.let {
+                        mAvatarImageView.setImageBitmap(it)
+                    }
+                }
+            }
+        }
+    }
+
+    @OnClick(R.id.change_photo_text_view)
+    fun changePhotoTextViewClicked() {
+        presenter.changeAvatarForPhotoWasClicked()
+    }
+
+    @OnClick(R.id.send_button)
+    fun sendButtonClicked() {
+        presenter.sendButtonClicked()
+    }
+
     private fun initToolbar() {
-        mToolbar.title = "Редактировать"
+        mToolbar.title = getString(R.string.edit)
         mToolbar.setNavigationOnClickListener {
             presenter.returnToPreviousFragmentButtonWasClicked()
         }
