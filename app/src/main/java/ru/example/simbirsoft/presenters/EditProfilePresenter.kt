@@ -1,19 +1,26 @@
 package ru.example.simbirsoft.presenters
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import android.util.Patterns
 import com.arellomobile.mvp.InjectViewState
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import ru.example.simbirsoft.models.User
 import ru.example.simbirsoft.views.EditProfileView
+import com.google.firebase.storage.UploadTask
+import com.google.firebase.storage.FirebaseStorage
+import java.io.ByteArrayOutputStream
+
 
 /**
-* Created by ag on 02.03.18.
-*/
+ * Created by ag on 02.03.18.
+ */
 @InjectViewState
 class EditProfilePresenter : BasePresenter<EditProfileView>() {
 
@@ -23,61 +30,40 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     private var mName = ""
     private var mPhone = ""
     private var mEmail = ""
-    private var mOldPassword = ""
-    private var mNewPassword = ""
-    private var mRepeatNewPassword = ""
+
+    private var mUploadTask: UploadTask? = null
 
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
         mIsFirstAttach = false
-        val database = FirebaseDatabase.getInstance().reference
-        database.child("users").child("0")
-                .addValueEventListener(object : ValueEventListener {
-                    override fun onCancelled(error: DatabaseError?) {
-                        viewState.progressBarVisibility(false)
-                        val exception = error?.toException()
-                        Log.w(this::class.java.simpleName,
-                                "Failed to read value.", exception)
-                        viewState.showMessage("Failed to read value ${exception.toString()}")
-                    }
-
-                    override fun onDataChange(data: DataSnapshot?) {
-                        val user = data?.getValue(User::class.java)
-                        mName = user?.name ?: ""
-                        mEmail = user?.email ?: ""
-                        mPhone = user?.phone ?: ""
-                        viewState.nameValue(mName)
-                        viewState.phoneValue(mPhone)
-                        viewState.emailValue(mEmail)
-                        viewState.progressBarVisibility(false)
-                    }
-                })
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            viewState.needAuthorize()
+        } else {
+            takeDataFromDatabaseForUser(currentUser)
+        }
     }
 
     override fun init() {
         super.init()
         if (!mIsFirstAttach) {
-            if (mAvatar != null) {
-                viewState.avatarValue(mAvatar!!)
+            mAvatar?.let {
+                viewState.avatarValue(it)
             }
             viewState.nameValue(mName)
             viewState.phoneValue(mPhone)
             viewState.emailValue(mEmail)
-            viewState.oldPasswordValue(mOldPassword)
-            viewState.newPasswordValue(mNewPassword)
-            viewState.repeatNewPasswordValue(mRepeatNewPassword)
             viewState.nameIsValid(mName.isNotEmpty())
             viewState.phoneIsValid(isValidPhone(mPhone))
             viewState.emailIsValid(isValidEmail(mEmail))
-            viewState.oldPasswordIsValid(mOldPassword.isNotEmpty())
-            viewState.newPasswordIsValid(mNewPassword.isNotEmpty())
-            viewState.repeatNewPasswordIsValid(mNewPassword == mOldPassword)
             changeSendButtonState()
+            viewState.progressBarVisibility(false)
         }
     }
 
     override fun destroy() {
         super.destroy()
+        mUploadTask?.cancel()
     }
 
     fun nameWasChanged(value: String) {
@@ -98,28 +84,18 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
         changeSendButtonState()
     }
 
-    fun oldPasswordWasChanged(value: String) {
-        mOldPassword = value
-        //TODO
-        viewState?.oldPasswordIsValid(value.isNotEmpty())
-        changeSendButtonState()
-    }
-
-    fun newPasswordWasChanged(value: String) {
-        mNewPassword = value
-        validateNewPasswords()
-        changeSendButtonState()
-    }
-
-    fun repeatPasswordWasChanged(value: String) {
-        mRepeatNewPassword = value
-        validateNewPasswords()
-        changeSendButtonState()
-    }
-
     fun sendButtonClicked() {
         val database = FirebaseDatabase.getInstance().reference.child("users").child("0")
-        database.setValue(User(mEmail, mName, mPhone))
+        database.setValue(User(mEmail, mName, mPhone)).addOnCompleteListener {
+            viewState.dataSaved(mName)
+            viewState.showMessage("Completed")
+        }.addOnFailureListener {
+            viewState.showMessage(it.message.toString())
+        }
+    }
+
+    fun changeAvatarFieldClicked() {
+        viewState.showPopupMenu()
     }
 
     fun returnToPreviousFragmentButtonWasClicked() {
@@ -134,10 +110,56 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
         viewState.makePhoto()
     }
 
-    private fun validateNewPasswords() {
-        viewState?.newPasswordIsValid(mNewPassword.isNotEmpty())
-        viewState?.repeatNewPasswordIsValid(mRepeatNewPassword.isNotEmpty() &&
-                mNewPassword == mRepeatNewPassword)
+    fun newCroppedAvatar(imageBitmap: Uri) {
+        mAvatar = imageBitmap
+        viewState.avatarValue(imageBitmap)
+        saveAvatar(imageBitmap)
+    }
+
+    private fun saveAvatar(imageBitmap: Uri) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val riversRef = storageRef.child("avatar/avatar.jpg")
+
+        mUploadTask = riversRef.putFile(imageBitmap)
+        /*mUploadTask!!.addOnSuccessListener({ taskSnapshot ->
+            // Get a URL to the uploaded content
+            val downloadUrl = taskSnapshot.downloadUrl
+        })
+                .addOnFailureListener({
+                    // Handle unsuccessful uploads
+                    // ...
+                })*/
+    }
+
+    fun takeDataFromDatabaseForUser(currentUser: FirebaseUser) {
+        val database = FirebaseDatabase.getInstance().reference
+        database.child("users").child(currentUser.uid)
+                .addValueEventListener(object : ValueEventListener {
+
+                    override fun onCancelled(error: DatabaseError?) {
+                        viewState.progressBarVisibility(false)
+                        val exception = error?.toException()
+                        Log.w(this::class.java.simpleName,
+                                "Failed to read value.", exception)
+                        viewState.showMessage("Failed to read value ${exception.toString()}")
+                    }
+
+                    override fun onDataChange(data: DataSnapshot?) {
+                        val user = data?.getValue(User::class.java)
+                        mName = user?.name ?: ""
+                        mEmail = user?.email ?: ""
+                        mPhone = user?.phone ?: ""
+                        user?.avatar?.let {
+                            if (it.isNotEmpty()) {
+                                mAvatar = Uri.parse(it)
+                            }
+                        }
+                        viewState.nameValue(mName)
+                        viewState.phoneValue(mPhone)
+                        viewState.emailValue(mEmail)
+                        viewState.progressBarVisibility(false)
+                    }
+                })
     }
 
     private fun isValidEmail(value: String) = Patterns.EMAIL_ADDRESS.matcher(value).matches()
@@ -146,7 +168,6 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
 
     private fun changeSendButtonState() {
         viewState.sendButtonState(mName.isNotEmpty() && isValidPhone(mPhone) &&
-                isValidEmail(mEmail) && mOldPassword.isNotEmpty() && mNewPassword.isNotEmpty() &&
-        mOldPassword == mNewPassword)
+                isValidEmail(mEmail))
     }
 }

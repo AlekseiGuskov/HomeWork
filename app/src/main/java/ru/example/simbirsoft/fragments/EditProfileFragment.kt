@@ -2,6 +2,7 @@ package ru.example.simbirsoft.fragments
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -17,12 +18,16 @@ import com.arellomobile.mvp.presenter.InjectPresenter
 import com.arellomobile.mvp.presenter.PresenterType
 import com.jakewharton.rxbinding2.widget.RxTextView
 import de.hdodenhof.circleimageview.CircleImageView
-import kotlinx.android.synthetic.main.login_fragment.view.*
 import ru.example.simbirsoft.R
 import ru.example.simbirsoft.presenters.EditProfilePresenter
 import ru.example.simbirsoft.views.EditProfileView
 import android.provider.MediaStore
 import android.support.v4.content.FileProvider
+import android.widget.PopupMenu
+import com.google.firebase.auth.FirebaseUser
+import com.squareup.picasso.Picasso
+import com.theartofdev.edmodo.cropper.CropImage
+import com.theartofdev.edmodo.cropper.CropImageView
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -32,11 +37,11 @@ import java.util.*
 /**
 * Created by ag on 02.03.18.
 */
-class EditProfileFragment : MvpBaseFragment(), EditProfileView {
+class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.ILoginSuccessCallback {
 
     companion object {
-        private const val LOAD_IMAGE = 1
-        private const val LOAD_PHOTO = 2
+        private const val LOAD_IMAGE_REQ = 1
+        private const val LOAD_PHOTO_REQ = 2
 
         fun getInstance(): EditProfileFragment = EditProfileFragment()
     }
@@ -44,16 +49,11 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
     @BindView(R.id.toolbar) lateinit var mToolbar: Toolbar
     @BindView(R.id.progress_bar_container) lateinit var mProgressBarContainer: FrameLayout
     @BindView(R.id.title_name) lateinit var mTitleNameTextView: TextView
-    @BindView(R.id.change_photo_text_view) lateinit var mChangePhotoTextView: TextView
     @BindView(R.id.name_text_input_layout) lateinit var mNameTextInputLayout: TextInputLayout
     @BindView(R.id.phone_text_input_layout) lateinit var mPhoneTextInputLayout: TextInputLayout
     @BindView(R.id.email_text_input_layout) lateinit var mEmailTextInputLayout: TextInputLayout
-    @BindView(R.id.old_password_text_input_layout) lateinit var mOldPasswordTextInputLayout: TextInputLayout
-    @BindView(R.id.new_password_text_input_layout) lateinit var mNewPasswordTextInputLayout: TextInputLayout
-    @BindView(R.id.repeat_password_text_input_layout) lateinit var mRepeatPasswordTextInputLayout: TextInputLayout
     @BindView(R.id.avatar) lateinit var mAvatarImageView: CircleImageView
     @BindView(R.id.send_button) lateinit var mSendButton: Button
-
 
     @InjectPresenter(type = PresenterType.LOCAL)
     lateinit var presenter: EditProfilePresenter
@@ -79,21 +79,6 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
                 .skip(1).subscribe {
                     presenter.phoneWasChanged(it.toString())
                 }
-
-        RxTextView.textChanges(mOldPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
-                .skip(1).subscribe {
-                    presenter.oldPasswordWasChanged(it.toString())
-                }
-
-        RxTextView.textChanges(mNewPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
-                .skip(1).subscribe {
-                    presenter.newPasswordWasChanged(it.toString())
-                }
-
-        RxTextView.textChanges(mRepeatPasswordTextInputLayout.editText!!).compose(bindToLifecycle())
-                .skip(1).subscribe {
-                    presenter.repeatPasswordWasChanged(it.toString())
-                }
     }
 
     override fun onDestroyView() {
@@ -105,8 +90,8 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         fragmentManager.popBackStack()
     }
 
-    override fun avatarValue(uri: Uri) {
-        mAvatarImageView.imageView.setImageURI(uri)
+    override fun avatarValue(imageUri: Uri) {
+        Picasso.get().load(imageUri).into(mAvatarImageView)
     }
 
     override fun nameIsValid(isValid: Boolean) {
@@ -145,42 +130,6 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         mEmailTextInputLayout.editText?.setText(value)
     }
 
-    override fun oldPasswordIsValid(isValid: Boolean) {
-        if (isValid) {
-            mOldPasswordTextInputLayout.isErrorEnabled = false
-        } else {
-            mOldPasswordTextInputLayout.error = getString(R.string.invalid_old_password)
-        }
-    }
-
-    override fun oldPasswordValue(value: String) {
-        mOldPasswordTextInputLayout.editText?.setText(value)
-    }
-
-    override fun newPasswordIsValid(isValid: Boolean) {
-        if (isValid) {
-            mNameTextInputLayout.isErrorEnabled = false
-        } else {
-            mNewPasswordTextInputLayout.error = getString(R.string.invalid_new_password)
-        }
-    }
-
-    override fun newPasswordValue(value: String) {
-        mNewPasswordTextInputLayout.editText?.setText(value)
-    }
-
-    override fun repeatNewPasswordIsValid(isValid: Boolean) {
-        if (isValid) {
-            mRepeatPasswordTextInputLayout.isErrorEnabled = false
-        } else {
-            mRepeatPasswordTextInputLayout.error = getString(R.string.invalid_new_password)
-        }
-    }
-
-    override fun repeatNewPasswordValue(value: String) {
-        mRepeatPasswordTextInputLayout.editText?.setText(value)
-    }
-
     override fun sendButtonState(state: Boolean) {
         mSendButton.isEnabled = state
         if (state) {
@@ -194,19 +143,9 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         showToast(text)
     }
 
-    override fun clearFields() {
-        mNameTextInputLayout.editText?.setText("")
-        mNameTextInputLayout.isErrorEnabled = false
-        mPhoneTextInputLayout.editText?.setText("")
-        mPhoneTextInputLayout.isErrorEnabled = false
-        mOldPasswordTextInputLayout.editText?.setText("")
-        mOldPasswordTextInputLayout.isErrorEnabled = false
-        mNewPasswordTextInputLayout.editText?.setText("")
-        mNewPasswordTextInputLayout.isErrorEnabled = false
-        mRepeatPasswordTextInputLayout.editText?.setText("")
-        mRepeatPasswordTextInputLayout.isErrorEnabled = false
-        mSendButton.isEnabled = false
-        mSendButton.setBackgroundColor(getColor(R.color.colorAccent))
+    override fun dataSaved(name: String) {
+        mTitleNameTextView.text = name
+        showToast(getString(R.string.data_saved))
     }
 
     override fun progressBarVisibility(isVisible: Boolean) {
@@ -217,11 +156,21 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         }
     }
 
+    override fun needAuthorize() {
+        fragmentManager.beginTransaction()
+                .addToBackStack(LoginFragment::class.simpleName.toString())
+                .add(android.R.id.content, LoginFragment.getInstance(this)).commit()
+    }
+
+    override fun showPopupMenu() {
+        showChangeAvatarPopupMenu()
+    }
+
     override fun chooseImage() {
         val intent = Intent(Intent.ACTION_PICK,
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         intent.type = "image/*"
-        startActivityForResult(intent, LOAD_IMAGE)
+        startActivityForResult(intent, LOAD_IMAGE_REQ)
     }
 
     override fun makePhoto() {
@@ -236,12 +185,12 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
             photo?.let {
                 val uri = FileProvider.getUriForFile(context, "ru.example.simbirsoft.fileprovider", it)
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-                startActivityForResult(takePictureIntent, LOAD_PHOTO)
+                startActivityForResult(takePictureIntent, LOAD_PHOTO_REQ)
             }
         }
     }
 
-    var mCurrentPhotoPath = ""
+    private var mCurrentPhotoPath = ""
 
     @Throws(IOException::class)
     private fun createImageFile(): File {
@@ -260,35 +209,78 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView {
         return image
     }
 
+    private fun showChangeAvatarPopupMenu() {
+        val changeAvatarPopupMenu = PopupMenu(context, mAvatarImageView)
+        changeAvatarPopupMenu.inflate(R.menu.change_avatar_popup)
+        changeAvatarPopupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.photo -> {
+                    presenter.changeAvatarForPhotoWasClicked()
+                    true
+                }
+                R.id.gallery -> {
+                    presenter.changeAvatarForImageWasClicked()
+                    true
+                }
+                else -> {
+                    false
+                }
+            }
+        }
+        changeAvatarPopupMenu.show()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK ) {
             when (requestCode) {
-                LOAD_IMAGE -> {
+                LOAD_IMAGE_REQ -> {
                     if (data?.data != null) {
-                        showMessage("Image")
+                        val imageUri = data.data
+                        cropImage(imageUri)
                     }
                 }
-                LOAD_PHOTO -> {
-                    showMessage("Photo")
-                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver,
-                            Uri.parse(mCurrentPhotoPath))
-                    bitmap?.let {
-                        mAvatarImageView.setImageBitmap(it)
+                LOAD_PHOTO_REQ -> {
+                    val imageUri = Uri.parse(mCurrentPhotoPath)
+                    cropImage(imageUri)
+                }
+                CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE -> {
+                    val result = CropImage.getActivityResult(data);
+                    val resultUri = result.uri
+                    resultUri?.let {
+                        presenter.newCroppedAvatar(it)
                     }
                 }
             }
         }
     }
 
+    override fun loginSuccess(user: FirebaseUser) {
+        presenter.takeDataFromDatabaseForUser(user)
+    }
+
     @OnClick(R.id.change_photo_text_view)
     fun changePhotoTextViewClicked() {
-        presenter.changeAvatarForPhotoWasClicked()
+        presenter.changeAvatarFieldClicked()
     }
 
     @OnClick(R.id.send_button)
     fun sendButtonClicked() {
         presenter.sendButtonClicked()
+    }
+
+    private fun cropImage(imageUri: Uri) {
+        CropImage.activity(imageUri)
+                .setCropShape(CropImageView.CropShape.OVAL)
+                .setGuidelines(CropImageView.Guidelines.OFF)
+                .setFixAspectRatio(true)
+                .setAutoZoomEnabled(false)
+                .start(context, this)
+        /*fragmentManager.beginTransaction()
+                .addToBackStack(CropImageFragment::class.simpleName.toString())
+                .add(android.R.id.content,
+                        CropImageFragment.createInstance(imageUri,
+                                this)).commit()*/
     }
 
     private fun initToolbar() {

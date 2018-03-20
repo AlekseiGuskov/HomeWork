@@ -10,6 +10,7 @@ import com.google.firebase.database.IgnoreExtraProperties
 @IgnoreExtraProperties
 class User {
 
+    lateinit var avatar: String
     lateinit var email: String
     lateinit var name: String
     lateinit var phone: String

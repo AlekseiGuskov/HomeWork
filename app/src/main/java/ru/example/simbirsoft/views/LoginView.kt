@@ -3,6 +3,7 @@ package ru.example.simbirsoft.views
 import com.arellomobile.mvp.MvpView
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType
+import com.google.firebase.auth.FirebaseUser
 
 /**
  * Created by harri
@@ -17,5 +18,5 @@ interface LoginView : MvpView {
     fun sendButtonState(state: Boolean)
     @StateStrategyType(SkipStrategy::class)
     fun showMessage(text: String)
-    fun clearFields()
+    fun loginSuccess(user: FirebaseUser)
 }

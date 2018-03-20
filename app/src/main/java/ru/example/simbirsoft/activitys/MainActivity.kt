@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     private fun beginLoginFragment() {
         supportFragmentManager.beginTransaction()
                 .addToBackStack(LoginFragment::class.simpleName.toString())
-                .add(android.R.id.content, LoginFragment.getInstance()).commit()
+                .add(android.R.id.content, LoginFragment.getInstance(null)).commit()
     }
 
     private fun beginEditProfileFragment() {

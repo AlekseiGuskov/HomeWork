@@ -2,12 +2,14 @@ package ru.example.simbirsoft.fragments
 
 import android.os.Bundle
 import android.support.design.widget.TextInputLayout
+import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.View
 import android.widget.Button
 import butterknife.BindView
 import com.arellomobile.mvp.presenter.InjectPresenter
 import com.arellomobile.mvp.presenter.PresenterType
+import com.google.firebase.auth.FirebaseUser
 import com.jakewharton.rxbinding2.widget.RxTextView
 import ru.example.simbirsoft.R
 import ru.example.simbirsoft.presenters.LoginPresenter
@@ -19,9 +21,15 @@ import ru.example.simbirsoft.views.LoginView
 */
 class LoginFragment : MvpBaseFragment(), LoginView {
 
+    interface ILoginSuccessCallback {
+        fun loginSuccess(user: FirebaseUser)
+    }
+
     companion object {
-        fun getInstance(): LoginFragment {
-            return LoginFragment()
+        fun getInstance(parentFragment: Fragment?): LoginFragment = LoginFragment().apply {
+            parentFragment?.let {
+                this.setTargetFragment(it, -1)
+            }
         }
     }
 
@@ -103,14 +111,10 @@ class LoginFragment : MvpBaseFragment(), LoginView {
         showToast(text)
     }
 
-    override fun clearFields() {
-        mEmailTextInputLayout.editText?.setText("")
-        mEmailTextInputLayout.isErrorEnabled = false
-        mPasswordInputLayout.editText?.setText("")
-        mPasswordInputLayout.isErrorEnabled = false
-        mSendButton.isEnabled = false
-        mSendButton.text = getString(R.string.not_all_fields_are_filled)
-        mSendButton.setBackgroundColor(getColor(R.color.colorAccent))
+    override fun loginSuccess(user: FirebaseUser) {
+        val parent = targetFragment as? ILoginSuccessCallback
+        parent?.loginSuccess(user)
+        fragmentManager.popBackStack()
     }
 
     private fun initToolbar() {

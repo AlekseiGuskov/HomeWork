@@ -25,4 +25,9 @@
     <string name="invalid_name">Invalid name</string>
     <string name="change_photo">Сменить фотографию</string>
     <string name="change_password">Сменить пароль</string>
+    <string name="gallery">Галерея</string>
+    <string name="camera">Камера</string>
+    <string name="data_saved">Data saved</string>
+    <string name="crop">Обрезать</string>
+    <string name="error">Ошибка</string>
 </resources>

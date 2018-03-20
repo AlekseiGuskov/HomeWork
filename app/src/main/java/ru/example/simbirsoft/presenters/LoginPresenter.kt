@@ -68,7 +68,7 @@ class LoginPresenter : BasePresenter<LoginView>() {
                 val email = user?.email ?: ""
                 viewState.showMessage("$email login")
                 clearDataFields()
-                viewState.clearFields()
+                viewState.loginSuccess(user)
             } else {
                 val ex = result.exception?.localizedMessage ?: ""
                 viewState.showMessage("Error: $ex")

@@ -1,7 +1,10 @@
 package ru.example.simbirsoft.views
 
+import android.graphics.Bitmap
 import android.net.Uri
 import com.arellomobile.mvp.MvpView
+import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy
+import com.arellomobile.mvp.viewstate.strategy.SingleStateStrategy
 import com.arellomobile.mvp.viewstate.strategy.SkipStrategy
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType
 
@@ -10,27 +13,25 @@ import com.arellomobile.mvp.viewstate.strategy.StateStrategyType
 */
 interface EditProfileView : MvpView {
     fun returnToPreviousFragment()
-    fun avatarValue(uri: Uri)
+    fun avatarValue(imageUri: Uri)
     fun nameIsValid(isValid: Boolean)
     fun nameValue(value: String)
     fun phoneIsValid(isValid: Boolean)
     fun phoneValue(value: String)
     fun emailIsValid(isValid: Boolean)
     fun emailValue(value: String)
-    fun oldPasswordIsValid(isValid: Boolean)
-    fun oldPasswordValue(value: String)
-    fun newPasswordIsValid(isValid: Boolean)
-    fun newPasswordValue(value: String)
-    fun repeatNewPasswordIsValid(isValid: Boolean)
-    fun repeatNewPasswordValue(value: String)
+    @StateStrategyType(SkipStrategy::class)
+    fun showPopupMenu()
     fun sendButtonState(state: Boolean)
     @StateStrategyType(SkipStrategy::class)
     fun showMessage(text: String)
-    @StateStrategyType(SkipStrategy::class)
     fun progressBarVisibility(isVisible: Boolean)
     @StateStrategyType(SkipStrategy::class)
     fun chooseImage()
     @StateStrategyType(SkipStrategy::class)
     fun makePhoto()
-    fun clearFields()
+    @StateStrategyType(SkipStrategy::class)
+    fun dataSaved(name: String)
+    @StateStrategyType(SkipStrategy::class)
+    fun needAuthorize()
 }
