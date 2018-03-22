@@ -19,4 +19,5 @@ interface LoginView : MvpView {
     @StateStrategyType(SkipStrategy::class)
     fun showMessage(text: String)
     fun loginSuccess(user: FirebaseUser)
+    fun progressBarVisibility(isVisible: Boolean)
 }

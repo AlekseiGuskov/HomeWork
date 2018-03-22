@@ -21,6 +21,7 @@ class LoginPresenter : BasePresenter<LoginView>() {
 
     override fun init() {
         super.init()
+        viewState.progressBarVisibility(false)
         viewState.emailValue(mEmail)
         viewState.emailIsValid(isValidEmail(mEmail))
         viewState.passwordValue(mPassword)
@@ -60,6 +61,7 @@ class LoginPresenter : BasePresenter<LoginView>() {
     }
 
     private fun login() {
+        viewState.progressBarVisibility(true)
         val mAuth = FirebaseAuth.getInstance()
         mAuth?.signInWithEmailAndPassword(mEmail,
                 mPassword)?.addOnCompleteListener { result ->
@@ -69,10 +71,11 @@ class LoginPresenter : BasePresenter<LoginView>() {
                 viewState.showMessage("$email login")
                 clearDataFields()
                 viewState.loginSuccess(user)
+                viewState.progressBarVisibility(false)
             } else {
                 val ex = result.exception?.localizedMessage ?: ""
                 viewState.showMessage("Error: $ex")
-                result.exception?.cause
+                viewState.progressBarVisibility(false)
             }
         }
     }

@@ -16,7 +16,8 @@ class User {
     lateinit var phone: String
 
     constructor()
-    constructor(email: String?, name: String?, phone: String?) {
+    constructor(avatar: String?, email: String?, name: String?, phone: String?) {
+        this.avatar = avatar?: ""
         this.email = email ?: ""
         this.name = name ?: ""
         this.phone = phone ?: ""

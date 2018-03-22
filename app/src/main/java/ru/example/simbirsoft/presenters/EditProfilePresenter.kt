@@ -1,6 +1,5 @@
 package ru.example.simbirsoft.presenters
 
-import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import android.util.Patterns
@@ -15,23 +14,23 @@ import ru.example.simbirsoft.models.User
 import ru.example.simbirsoft.views.EditProfileView
 import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.FirebaseStorage
-import java.io.ByteArrayOutputStream
 
 
 /**
- * Created by ag on 02.03.18.
- */
+* Created by ag on 02.03.18.
+*/
 @InjectViewState
 class EditProfilePresenter : BasePresenter<EditProfileView>() {
 
     private var mIsFirstAttach = true
 
-    private var mAvatar: Uri? = null
+    private var mAvatarUri: Uri? = null
     private var mName = ""
     private var mPhone = ""
     private var mEmail = ""
 
     private var mUploadTask: UploadTask? = null
+    private var mDownloadAvatarUri: Uri? = null
 
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
@@ -47,9 +46,10 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     override fun init() {
         super.init()
         if (!mIsFirstAttach) {
-            mAvatar?.let {
+            mAvatarUri?.let {
                 viewState.avatarValue(it)
             }
+            viewState.titleNameValue(mName)
             viewState.nameValue(mName)
             viewState.phoneValue(mPhone)
             viewState.emailValue(mEmail)
@@ -85,13 +85,29 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     }
 
     fun sendButtonClicked() {
-        val database = FirebaseDatabase.getInstance().reference.child("users").child("0")
-        database.setValue(User(mEmail, mName, mPhone)).addOnCompleteListener {
-            viewState.dataSaved(mName)
-            viewState.showMessage("Completed")
-        }.addOnFailureListener {
-            viewState.showMessage(it.message.toString())
+        if (!mAvatarUri?.toString().isNullOrEmpty()) {
+            saveAvatar(mAvatarUri!!, {
+                saveData()
+            })
+        } else {
+            saveData()
         }
+    }
+
+    private fun saveData() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        val database = FirebaseDatabase.getInstance().reference.child("users").child(uid)
+        database
+                .setValue(User(mDownloadAvatarUri.toString(), mEmail, mName, mPhone))
+                .addOnCompleteListener {
+                    viewState.dataSaved(mName)
+                    viewState.showMessage("Completed")
+                    viewState.returnToPreviousFragment()
+                }
+                .addOnFailureListener {
+                    viewState.showMessage(it.message.toString())
+                    viewState.returnToPreviousFragment()
+                }
     }
 
     fun changeAvatarFieldClicked() {
@@ -110,25 +126,25 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
         viewState.makePhoto()
     }
 
-    fun newCroppedAvatar(imageBitmap: Uri) {
-        mAvatar = imageBitmap
-        viewState.avatarValue(imageBitmap)
-        saveAvatar(imageBitmap)
+    fun newCroppedAvatar(imageUri: Uri) {
+        mAvatarUri = imageUri
+        viewState.avatarValue(imageUri)
     }
 
-    private fun saveAvatar(imageBitmap: Uri) {
+    private fun saveAvatar(imageBitmap: Uri, successTask: () -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference
         val riversRef = storageRef.child("avatar/avatar.jpg")
 
         mUploadTask = riversRef.putFile(imageBitmap)
-        /*mUploadTask!!.addOnSuccessListener({ taskSnapshot ->
+        mUploadTask?.addOnSuccessListener({ taskSnapshot ->
             // Get a URL to the uploaded content
-            val downloadUrl = taskSnapshot.downloadUrl
+            mDownloadAvatarUri = taskSnapshot.downloadUrl
+            successTask.invoke()
         })
-                .addOnFailureListener({
+                ?.addOnFailureListener({
                     // Handle unsuccessful uploads
-                    // ...
-                })*/
+                    successTask.invoke()
+                })
     }
 
     fun takeDataFromDatabaseForUser(currentUser: FirebaseUser) {
@@ -151,9 +167,11 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
                         mPhone = user?.phone ?: ""
                         user?.avatar?.let {
                             if (it.isNotEmpty()) {
-                                mAvatar = Uri.parse(it)
+                                mAvatarUri = Uri.parse(it)
+                                viewState.avatarValue(mAvatarUri!!)
                             }
                         }
+                        viewState.titleNameValue(mName)
                         viewState.nameValue(mName)
                         viewState.phoneValue(mPhone)
                         viewState.emailValue(mEmail)

@@ -3,15 +3,15 @@ package ru.example.simbirsoft.fragments
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.support.design.widget.TextInputLayout
 import android.support.v7.widget.Toolbar
 import android.view.View
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.TextView
 import butterknife.BindView
 import butterknife.OnClick
 import com.arellomobile.mvp.presenter.InjectPresenter
@@ -22,14 +22,20 @@ import ru.example.simbirsoft.R
 import ru.example.simbirsoft.presenters.EditProfilePresenter
 import ru.example.simbirsoft.views.EditProfileView
 import android.provider.MediaStore
+import android.support.design.widget.AppBarLayout
 import android.support.v4.content.FileProvider
-import android.widget.PopupMenu
+import android.view.ViewGroup
+import android.widget.*
 import com.google.firebase.auth.FirebaseUser
 import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
+import kotlinx.android.synthetic.main.login_fragment.view.*
+import okhttp3.internal.Util
 import java.io.File
 import java.io.IOException
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,6 +52,7 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
         fun getInstance(): EditProfileFragment = EditProfileFragment()
     }
 
+    @BindView(R.id.image_viewplaces) lateinit var mAppBarPlace: ImageView
     @BindView(R.id.toolbar) lateinit var mToolbar: Toolbar
     @BindView(R.id.progress_bar_container) lateinit var mProgressBarContainer: FrameLayout
     @BindView(R.id.title_name) lateinit var mTitleNameTextView: TextView
@@ -57,6 +64,8 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
 
     @InjectPresenter(type = PresenterType.LOCAL)
     lateinit var presenter: EditProfilePresenter
+
+    private var mLoadAvatarTarget: Target? = null
 
     override fun layoutResourceId(): Int = R.layout.edit_profile_fragment
 
@@ -83,6 +92,9 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mLoadAvatarTarget?.let {
+            Picasso.get().cancelRequest(it)
+        }
         presenter.destroy()
     }
 
@@ -91,7 +103,24 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
     }
 
     override fun avatarValue(imageUri: Uri) {
-        Picasso.get().load(imageUri).into(mAvatarImageView)
+        mLoadAvatarTarget = object: Target {
+            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+            }
+
+            override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+            }
+
+            override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
+                bitmap?.let {
+                    mAvatarImageView.setImageBitmap(it)
+                    mAppBarPlace.setImageBitmap(ru.example.simbirsoft.common.Util.blur(context, it))
+                }
+            }
+        }
+        mLoadAvatarTarget?.let {
+            Picasso.get().load(imageUri).into(it)
+        }
     }
 
     override fun nameIsValid(isValid: Boolean) {
@@ -145,7 +174,6 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
 
     override fun dataSaved(name: String) {
         mTitleNameTextView.text = name
-        showToast(getString(R.string.data_saved))
     }
 
     override fun progressBarVisibility(isVisible: Boolean) {
@@ -188,6 +216,10 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
                 startActivityForResult(takePictureIntent, LOAD_PHOTO_REQ)
             }
         }
+    }
+
+    override fun titleNameValue(value: String) {
+        mTitleNameTextView.text = value
     }
 
     private var mCurrentPhotoPath = ""
@@ -276,11 +308,6 @@ class EditProfileFragment : MvpBaseFragment(), EditProfileView, LoginFragment.IL
                 .setFixAspectRatio(true)
                 .setAutoZoomEnabled(false)
                 .start(context, this)
-        /*fragmentManager.beginTransaction()
-                .addToBackStack(CropImageFragment::class.simpleName.toString())
-                .add(android.R.id.content,
-                        CropImageFragment.createInstance(imageUri,
-                                this)).commit()*/
     }
 
     private fun initToolbar() {

@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
 import butterknife.BindView
 import com.arellomobile.mvp.presenter.InjectPresenter
 import com.arellomobile.mvp.presenter.PresenterType
@@ -36,6 +37,7 @@ class LoginFragment : MvpBaseFragment(), LoginView {
     @InjectPresenter(type = PresenterType.LOCAL)
     lateinit var presenter: LoginPresenter
 
+    @BindView(R.id.progress_bar_container) lateinit var mProgressBarContainer: FrameLayout
     @BindView(R.id.toolbar) lateinit var mToolbar: Toolbar
     @BindView(R.id.email_text_input_layout) lateinit var mEmailTextInputLayout: TextInputLayout
     @BindView(R.id.password_text_input_layout) lateinit var mPasswordInputLayout: TextInputLayout
@@ -115,6 +117,14 @@ class LoginFragment : MvpBaseFragment(), LoginView {
         val parent = targetFragment as? ILoginSuccessCallback
         parent?.loginSuccess(user)
         fragmentManager.popBackStack()
+    }
+
+    override fun progressBarVisibility(isVisible: Boolean) {
+        if (isVisible) {
+            mProgressBarContainer.visibility = View.VISIBLE
+        } else {
+            mProgressBarContainer.visibility = View.GONE
+        }
     }
 
     private fun initToolbar() {

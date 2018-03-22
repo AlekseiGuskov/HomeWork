@@ -19,7 +19,8 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="#252423"
+                android:paddingTop="6dp"
+                android:background="@color/black_holo"
                 app:titleTextColor="@android:color/white" />
 
         </android.support.design.widget.AppBarLayout>
@@ -137,5 +138,7 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <include layout="@layout/layout_progress_bar" />
 
 </RelativeLayout>

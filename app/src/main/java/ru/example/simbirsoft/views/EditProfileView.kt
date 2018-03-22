@@ -34,4 +34,5 @@ interface EditProfileView : MvpView {
     fun dataSaved(name: String)
     @StateStrategyType(SkipStrategy::class)
     fun needAuthorize()
+    fun titleNameValue(value: String)
 }

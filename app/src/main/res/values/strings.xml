@@ -30,4 +30,5 @@
     <string name="data_saved">Data saved</string>
     <string name="crop">Обрезать</string>
     <string name="error">Ошибка</string>
+    <string name="error_upload_avatar">Error upload avatar</string>
 </resources>
