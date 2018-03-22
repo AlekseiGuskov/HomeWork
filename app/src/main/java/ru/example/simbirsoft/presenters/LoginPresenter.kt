@@ -3,6 +3,8 @@ package ru.example.simbirsoft.presenters
 import android.text.TextUtils
 import android.util.Patterns
 import com.arellomobile.mvp.InjectViewState
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import ru.example.simbirsoft.R
 import ru.example.simbirsoft.common.Util
@@ -19,6 +21,8 @@ class LoginPresenter : BasePresenter<LoginView>() {
     private var mEmail = ""
     private var mPassword = ""
 
+    private var mAuthorizeTask: Task<AuthResult>? = null
+
     override fun init() {
         super.init()
         viewState.progressBarVisibility(false)
@@ -30,6 +34,7 @@ class LoginPresenter : BasePresenter<LoginView>() {
 
     override fun destroy() {
         super.destroy()
+        mAuthorizeTask = null
     }
 
     fun emailWasChanged(email: String) {
@@ -63,7 +68,7 @@ class LoginPresenter : BasePresenter<LoginView>() {
     private fun login() {
         viewState.progressBarVisibility(true)
         val mAuth = FirebaseAuth.getInstance()
-        mAuth?.signInWithEmailAndPassword(mEmail,
+        mAuthorizeTask = mAuth?.signInWithEmailAndPassword(mEmail,
                 mPassword)?.addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 val user = result.result.user
