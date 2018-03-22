@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1011687786839-1l3incs721ec6ocg8bodp7dlkrm1l12b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ru.example.simbirsoft",
+            "certificate_hash": "ec80b8df7fae67cc592d2fbe69648e9baf22af4d"
+          }
+        },
+        {
           "client_id": "1011687786839-0a74qkcmgkj5bg6mb6et2dfbagls589v.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,8 +37,13 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1011687786839-0a74qkcmgkj5bg6mb6et2dfbagls589v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2
