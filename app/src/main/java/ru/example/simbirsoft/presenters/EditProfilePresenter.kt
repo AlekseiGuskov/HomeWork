@@ -14,6 +14,7 @@ import ru.example.simbirsoft.models.User
 import ru.example.simbirsoft.views.EditProfileView
 import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.FirebaseStorage
+import ru.example.simbirsoft.R
 
 
 /**
@@ -32,10 +33,13 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     private var mUploadTask: UploadTask? = null
     private var mDownloadAvatarUri: Uri? = null
 
+    private var mUserUid: String = ""
+
     override fun onFirstViewAttach() {
         super.onFirstViewAttach()
         mIsFirstAttach = false
         val currentUser = FirebaseAuth.getInstance().currentUser
+        mUserUid = currentUser?.uid ?: ""
         if (currentUser == null) {
             viewState.needAuthorize()
         } else {
@@ -95,13 +99,12 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     }
 
     private fun saveData() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-        val database = FirebaseDatabase.getInstance().reference.child("users").child(uid)
+        val database = FirebaseDatabase.getInstance().reference.child("users").child(mUserUid)
         database
                 .setValue(User(mDownloadAvatarUri.toString(), mEmail, mName, mPhone))
                 .addOnCompleteListener {
                     viewState.dataSaved(mName)
-                    viewState.showMessage("Completed")
+                    viewState.showMessage(getString(R.string.completed))
                     viewState.returnToPreviousFragment()
                 }
                 .addOnFailureListener {
@@ -133,7 +136,7 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
 
     private fun saveAvatar(imageBitmap: Uri, successTask: () -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference
-        val riversRef = storageRef.child("avatar/avatar.jpg")
+        val riversRef = storageRef.child("avatar/$mUserUid/avatar.jpg")
 
         mUploadTask = riversRef.putFile(imageBitmap)
         mUploadTask?.addOnSuccessListener({ taskSnapshot ->

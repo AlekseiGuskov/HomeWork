@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/HomeWork.iml" filepath="$PROJECT_DIR$/HomeWork.iml" />
-      <module fileurl="file://C:\Users\harri\AndroidStudioProjects\SimbirSoft\HomeWork.iml" filepath="C:\Users\harri\AndroidStudioProjects\SimbirSoft\HomeWork.iml" />
+      <module fileurl="file://C:/Users/harri/AndroidStudioProjects/SimbirSoft/HomeWork.iml" filepath="C:/Users/harri/AndroidStudioProjects/SimbirSoft/HomeWork.iml" />
       <module fileurl="file://$PROJECT_DIR$/SimbirSoft.iml" filepath="$PROJECT_DIR$/SimbirSoft.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
