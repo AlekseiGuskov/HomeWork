@@ -29,6 +29,8 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     private var mName = ""
     private var mPhone = ""
     private var mEmail = ""
+    private var mLat = .0
+    private var mLng = .0
 
     private var mUploadTask: UploadTask? = null
     private var mDownloadAvatarUri: Uri? = null
@@ -101,7 +103,7 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
     private fun saveData() {
         val database = FirebaseDatabase.getInstance().reference.child("users").child(mUserUid)
         database
-                .setValue(User(mDownloadAvatarUri.toString(), mEmail, mName, mPhone))
+                .setValue(User(mDownloadAvatarUri.toString(), mEmail, mName, mPhone, mLat, mLng))
                 .addOnCompleteListener {
                     viewState.dataSaved(mName)
                     viewState.showMessage(getString(R.string.completed))
@@ -168,6 +170,8 @@ class EditProfilePresenter : BasePresenter<EditProfileView>() {
                         mName = user?.name ?: ""
                         mEmail = user?.email ?: ""
                         mPhone = user?.phone ?: ""
+                        mLat = user?.lat ?: .0
+                        mLng = user?.lng ?: .0
                         user?.avatar?.let {
                             if (it.isNotEmpty()) {
                                 mAvatarUri = Uri.parse(it)
